@@ -1,0 +1,53 @@
+stages:
+  - build:assets
+  - build:docker
+  - deploy
+
+default:
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [ "" ]
+
+assets:
+  stage: build:assets
+  image: node:15
+  script:
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - dist
+
+docker-latest:
+  stage: build:docker
+  dependencies:
+    - assets
+  script:
+    - 'echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json'
+    - '/kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:latest --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA'
+  only:
+    - master
+
+docker-stable:
+  stage: build:docker
+  dependencies:
+    - assets
+  script:
+    - 'echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json'
+    - '/kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:stable --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA'
+  only:
+    - /^v.*/
+  except:
+    - branches
+
+deploy:
+  stage: deploy
+  image: curlimages/curl:latest
+  dependencies:
+    - docker-stable
+  script:
+    - curl -X POST -F ref=master -F token=${WEBHOOK_TOKEN} https://gitlab.com/api/v4/projects/${DEPLOY_PROJECT_ID}/trigger/pipeline
+  only:
+    - /^v.*/
+  except:
+    - branches

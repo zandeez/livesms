@@ -1,0 +1,46 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+body {
+  @apply bg-center;
+  background-image: url("/bg.png");
+}
+
+.alert
+{
+  @apply p-2 border-2;
+}
+
+.alert.danger {
+  @apply border-red-300 bg-red-100 text-red-500;
+}
+
+.alert.success {
+  @apply border-green-300 bg-green-100 text-green-500;
+}
+
+input, button, select
+{
+  @apply w-full p-2;
+}
+
+input, select {
+  @apply bg-gray-100 border-2 border-gray-100;
+}
+
+input:focus, input:hover, input:active, select:focus, select:hover, select:active {
+  @apply border-purple-500;
+}
+
+input:disabled, select:disabled {
+  @apply bg-gray-300;
+}
+
+button {
+  @apply bg-purple-500 text-white;
+}
+
+button:disabled {
+  @apply bg-gray-500;
+}

@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  web:
+    restart: unless-stopped
+    image: registry.gitlab.com/live-sms/web-ui:stable
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.websms-security-headers.headers.isDevelopment=false"
+      - "traefik.http.middlewares.websms-security-headers.headers.framedeny=true"
+      - "traefik.http.middlewares.websms-security-headers.headers.sslredirect=true"
+      - "traefik.http.middlewares.websms-security-headers.headers.stsSeconds=63072000"
+      - "traefik.http.middlewares.websms-security-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.websms-security-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.websms-security-headers.headers.sslHost=${LIVESMS_HOST}"
+      - "traefik.http.middlewares.websms-security-headers.headers.sslForceHost=true"
+      - "traefik.http.routers.websms.middlewares=websms-security-headers"
+      - "traefik.http.routers.websms.rule=Host(`${LIVESMS_HOST}`) && PathPrefix(`/`)"
+
+  api:
+    restart: unless-stopped
+    image: registry.gitlab.com/live-sms/api:stable
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.smsapi.middlewares=websms-security-headers"
+      - "traefik.http.routers.smsapi.rule=Host(`${LIVESMS_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || Path(`/openapi.json`))"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DB_URL: postgresql://websms:${DB_PASSWORD}@postgres/websms
+      REDIS_URL: redis://redis
+      REDIS_DB: 2
+
+  redis:
+    restart: unless-stopped
+    image: redis:6
+
+  postgres:
+    restart: unless-stopped
+    image: postgres:13
+    environment:
+      POSTGRES_USER: websms
+      POSTGRES_DB: websms
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - "dbdata:/var/lib/postgresql/data"
+
+volumes:
+  dbdata:

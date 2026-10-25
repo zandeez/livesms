@@ -1,0 +1,36 @@
+stages:
+  - deploy:setup
+  - deploy:docker
+
+default:
+  before_script:
+    - mkdir ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - echo "$SSH_PRIVATE_KEY" >> ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+
+docker-setup:
+  stage: deploy:setup
+  image: docker:stable
+  services:
+    - docker:dind
+  script:
+    - export DOCKER_HOST=ssh://pipelines@${DEPLOY_HOST}
+    - docker login --username=docker-deploy --password=$DOCKER_DEPLOY_TOKEN registry.gitlab.com
+    - cp ~/.docker/config.json .
+  artifacts:
+    paths:
+      - config.json
+
+docker-deploy:
+  stage: deploy:docker
+  dependencies:
+    - docker-setup
+  image: docker/compose:debian-1.27.4
+  script:
+    - mkdir ~/.docker
+    - mv config.json ~/.docker
+    - export DOCKER_HOST=ssh://pipelines@${DEPLOY_HOST} DB_PASSWORD=$DB_PASSWORD
+    - docker-compose pull
+    - docker-compose -p websms up -d
