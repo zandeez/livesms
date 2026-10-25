@@ -11,7 +11,12 @@ from sms.schemas import WebsocketTicketData
 
 async def get_websocket_user(ticket: str, request: WebSocket):
     redis = await redis_conn()
-    ticket = await redis.get(ticket)
+    # Tickets are single use: read and delete atomically
+    transaction = redis.multi_exec()
+    ticket_get = transaction.get(ticket)
+    transaction.delete(ticket)
+    await transaction.execute()
+    ticket = await ticket_get
     if ticket:
         ticket_data = WebsocketTicketData(**json.loads(ticket))
         if request.client.host == str(ticket_data.ip):

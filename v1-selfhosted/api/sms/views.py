@@ -93,7 +93,7 @@ async def create_ws_ticket(request: Request, user: User = Depends(get_current_us
     redis = await redis_conn()
     response_ticket = schemas.WebsocketTicketResponse()
     ticket_data = schemas.WebsocketTicketData(userId=user.id, ip=request.client.host)
-    await redis.set(str(response_ticket.ticket), ticket_data.json(), expire=10)
+    await redis.set(response_ticket.ticket, ticket_data.json(), expire=10)
     return response_ticket
 
 

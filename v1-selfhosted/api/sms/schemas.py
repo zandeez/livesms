@@ -2,8 +2,9 @@ from datetime import datetime
 from enum import Enum
 from ipaddress import IPv6Address, IPv4Address
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Union, Optional
+import secrets
 import uuid
 
 
@@ -55,7 +56,8 @@ class WebsocketTicketData(BaseModel):
 
 
 class WebsocketTicketResponse(BaseModel):
-    ticket: uuid.UUID = uuid.uuid4()
+    # Fresh random ticket per response (a plain default would be evaluated once and shared by every request)
+    ticket: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
 
 
 class SMSResponse(BaseModel):

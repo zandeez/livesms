@@ -11,11 +11,10 @@
 
 	onDestroy(onAuthStateChanged(auth, (user) => {
 		if (user) {
-			if ($page.query.has('next')) {
-				goto(decodeURI($page.query.get('next')));
-			} else {
-				goto('/');
-			}
+			// Only follow same-origin paths, so ?next= can't redirect off-site or run a javascript: URL
+			const next = $page.query.get('next');
+			const target = next ? new URL(next, location.origin) : null;
+			goto(target && target.origin === location.origin ? target.pathname + target.search + target.hash : '/');
 		}
 	}));
 

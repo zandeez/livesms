@@ -137,6 +137,14 @@ npm run dev
   only generated when a token was *verified*. `create_token` now makes sure
   the key exists first.
 
+- **v1 websocket tickets:** the ticket's default value was evaluated once, when
+  the module loaded, so every ticket from a process was identical and could
+  be reused. Each ticket is now a fresh random value, and it's read and
+  deleted from Redis in one transaction, so it works only once.
+- **v2 login redirect:** `?next=` was passed straight to `goto()`, which
+  allowed redirects off-site and `javascript:` URLs. Only same-origin paths
+  are now followed.
+
 ### Known limitations (left as-is)
 
 - **Credentials:** carrier API credentials are stored in plain text, in
