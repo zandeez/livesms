@@ -9,12 +9,23 @@
 	let password = '';
 	let loginError = null;
 
+	function safeNext(next) {
+		if (!next) {
+			return '/';
+		}
+		const target = new URL(next, location.origin);
+		if (target.origin !== location.origin) {
+			return '/';
+		}
+		// Collapse leading slashes: a same-origin URL with path "//evil.com" would otherwise become a protocol-relative link
+		const dest = '/' + target.pathname.replace(/^[\/\\]+/, '') + target.search + target.hash;
+		return new URL(dest, location.origin).origin === location.origin ? dest : '/';
+	}
+
 	onDestroy(onAuthStateChanged(auth, (user) => {
 		if (user) {
 			// Only follow same-origin paths, so ?next= can't redirect off-site or run a javascript: URL
-			const next = $page.query.get('next');
-			const target = next ? new URL(next, location.origin) : null;
-			goto(target && target.origin === location.origin ? target.pathname + target.search + target.hash : '/');
+			goto(safeNext($page.query.get('next')));
 		}
 	}));
 
