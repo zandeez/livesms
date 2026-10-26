@@ -75,7 +75,7 @@ How it works:
 ```mermaid
 flowchart LR
     carrier[Sinch / Simwood] -- "webhook<br/>sinchWebhook/{uid}?token=…" --> fnIn[HTTPS function]
-    fnIn -- write message --> fs[(Firestore<br/>users/{uid}/conversations/…/messages)]
+    fnIn -- write message --> fs[("Firestore<br/>users/{uid}/conversations/…/messages")]
     browser[Browser<br/>SvelteKit] -- "live query<br/>(security rules: own uid only)" --> fs
     browser -- "write outbound message" --> fs
     fs -- "onCreate trigger" --> fnSend[sinchSend]
